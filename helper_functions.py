@@ -2,20 +2,53 @@ import numpy as np
 import pandas as pd
 import random
 
-def apply_country_chp_profile(column,chp):
-    # apply country chp profile based on temperature to unit columns
-    country = column.name
-    chp_series = chp[country]
-    return chp_series
 
+def apply_nuclear_outages(chp:pd.DataFrame, gen_nuclear:pd.DataFrame, french_nucl_cf:float, other_nucl_cf:float) -> pd.DataFrame:
+    """
+    This function creates a generation profile for nuclear units (using one capacity factor for France, and another for all other countries)     and sets the level of capacity generation available - either 1 or 0, replicating an annual maintenance schedule
 
-def apply_nuclear_outages(chp, gen_nuclear, french_nucl_cf, other_nucl_cf):
+    Parameters
+    ----------
+        chp: Pandas.DataFrame
+            country CHP profiles
+        gen_nuclear: Pandas.DataFrame
+            Dataframe with nuclear unit information
+        french_nucl_cf: float
+            capacity factor of French units - determines level of downtime
+        other_nucl_cf: float
+            capacity factor of countries other than France units - determines level of downtime
+
+    Returns
+    -------
+        pandas.DataFrame:
+            nuclear p_max_pu time series for all units
+    """
     nuclear_max_timeseries = pd.DataFrame(index=chp.index, columns=gen_nuclear.bus)
-    nuclear_max_timeseries = nuclear_max_timeseries.apply(func=apply_nuclear_outage_profile, args=(french_nucl_cf,other_nucl_cf, chp.index), axis=0)
+    nuclear_max_timeseries = nuclear_max_timeseries.apply(func=apply_nuclear_outage_profile, args=(french_nucl_cf,other_nucl_cf, chp.index),     axis=0)
     nuclear_max_timeseries.columns = gen_nuclear.index
     return nuclear_max_timeseries
 
-def apply_nuclear_outage_profile(column,french_nucl_cf,other_nucl_cf, index_timeseries):
+
+def apply_nuclear_outage_profile(column:pd.Series, french_nucl_cf:float, other_nucl_cf:float, index_timeseries:pd.Series) -> pd.Series:
+    """
+    This function applies the nuclear outage profile to each unit (column) in nuclear unit generation dataframe
+
+    Parameters
+    ----------
+        column: Pandas.Series
+            nuclear unit to apply outage function to
+        french_nucl_cf: float
+            capacity factor of French units - determines level of downtime
+        other_nucl_cf: float
+            capacity factor of countries other than France units - determines level of downtime
+        index_timeseries: Pandas.Series
+            Dataframe with nuclear unit information
+
+    Returns
+    -------
+        pandas.Series:
+            nuclear p_max_pu time series for unit
+    """
     country = column.name
     # create nuclear outage profile for French reactors
     if country == 'France':
@@ -24,7 +57,20 @@ def apply_nuclear_outage_profile(column,french_nucl_cf,other_nucl_cf, index_time
         nuclear_time_series = create_maintenance_profile(other_nucl_cf)
     return pd.Series(index=index_timeseries, data=nuclear_time_series, name=country)
 
-def apply_ramping(row):
+
+def apply_ramping(row:pd.DataFrame) -> int:
+    """
+    This function creates 'min_up_time' (ramping) for grouped generators
+
+    Parameters
+    ----------
+        row: pd.DataFrame
+            function applies to row from gas unit dataframe
+    Returns
+    -------
+        int:
+            ramp up time
+    """
     # apply gas min_ramp_up time (hours)
     # 3/4 hour start up time for ccgts
     if row['type'] == 'CC':
@@ -37,13 +83,41 @@ def apply_ramping(row):
         ramp=0
     return ramp
 
-def chp_unit_profile(chp, original_df):
-    chp_timeseries = pd.DataFrame(chp,columns=original_df.bus)
-    chp_timeseries = chp_timeseries.apply(func=apply_country_chp_profile,  axis=0, args=(chp,))
+
+def chp_unit_profile(chp:pd.DataFrame, original_df:pd.DataFrame) -> pd.DataFrame:
+    """
+    This function creates a chp profile based on country temperature for each unit, based on their location
+
+    Parameters
+    ----------
+        chp: Pandas.DataFrame
+            country CHP profiles
+        original_df: Pandas.DataFrame
+            Dataframe with unit information
+
+    Returns
+    -------
+        pandas.DataFrame:
+            unit CHP time-series
+    """
+    chp_timeseries = pd.DataFrame(data=chp,columns=original_df.bus)
     chp_timeseries.columns = original_df.index
     return chp_timeseries
 
-def create_maintenance_profile(cf):
+
+def create_maintenance_profile(cf:float) ->list[float]:
+    """
+    This function creates a maintenance profile for nuclear units, creating a timeseries with 1 and 0 indicating full generation or downtime     respectively
+
+    Parameters
+    ----------
+        cf: float
+            annual average capacity factor of nuclear units
+    Returns
+    -------
+        list[float]:
+            hourly p_max_pu of nuclear unit
+    """
     # create binary nuclear maintenance profile 
     hours_out = (1-cf)*(365*24)
     values = [1]*24*365
@@ -54,13 +128,27 @@ def create_maintenance_profile(cf):
         duration = random.randint(7*24,31*24)
         end_index = start_index + duration
         sub_set = values[start_index:end_index]
+        # if maintenance has already been scheduled during chosen time, pick again
         if 0 not in sub_set:
             values[start_index:end_index] = [0]*duration
     return values
 
-def grouped_gas_ramping(gen_gas):
+
+def grouped_gas_ramping(gen_gas:pd.DataFrame) -> pd.DataFrame:
+    """
+    This function groups gas generators by age, country and technology (type) and creates parameter 'min_up_time' for grouped generators
+
+    Parameters
+    ----------
+        gen_gas: pd.DataFrame
+            dataframe with all gas generator units
+    Returns
+    -------
+        pd.DataFrame:
+            dataframe with gas generators grouped by age, country & technology and min_up_time applied
+    """    
     grouped_gas = gen_gas.groupby(['bus', 'type', 'age']).agg({'carrier':'first','p_nom':sum, 'marginal_cost': 'mean','efficiency':'mean'}).reset_index()
     grouped_gas['min_up_time'] = grouped_gas[['type','age']].apply(apply_ramping, axis=1)
     grouped_gas = grouped_gas.set_index(grouped_gas['bus'] + '_' + grouped_gas['type'] + '_' + grouped_gas['age'])
     return grouped_gas
-                
+
