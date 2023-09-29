@@ -26,7 +26,10 @@ def apply_nuclear_outages(chp:pd.DataFrame, gen_nuclear:pd.DataFrame, french_nuc
     nuclear_max_timeseries = pd.DataFrame(index=chp.index, columns=gen_nuclear.bus)
     nuclear_max_timeseries = nuclear_max_timeseries.apply(func=apply_nuclear_outage_profile, args=(french_nucl_cf,other_nucl_cf, chp.index),     axis=0)
     nuclear_max_timeseries.columns = gen_nuclear.index
-    return nuclear_max_timeseries
+    # for the minimum series, set = 0.4 when p_max = 1
+    nuclear_min_timeseries = nuclear_max_timeseries.copy()
+    nuclear_min_timeseries[nuclear_min_timeseries == 1] = 0.4
+    return nuclear_max_timeseries, nuclear_min_timeseries
 
 
 def apply_nuclear_outage_profile(column:pd.Series, french_nucl_cf:float, other_nucl_cf:float, index_timeseries:pd.Series) -> pd.Series:
