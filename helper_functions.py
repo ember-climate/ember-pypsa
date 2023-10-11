@@ -3,16 +3,18 @@ import pandas as pd
 import random
 
 
-def apply_nuclear_outages(chp:pd.DataFrame, gen_nuclear:pd.DataFrame, french_nucl_cf:float, other_nucl_cf:float) -> pd.DataFrame:
+def apply_nuclear_outages(chp:pd.DataFrame, gen_nuclear:pd.DataFrame, nuclear_p_min: float, french_nucl_cf:float, other_nucl_cf:float) -> pd.DataFrame:
     """
     This function creates a generation profile for nuclear units (using one capacity factor for France, and another for all other countries)     and sets the level of capacity generation available - either 1 or 0, replicating an annual maintenance schedule
 
     Parameters
     ----------
         chp: Pandas.DataFrame
-            country CHP profiles
+            country CHP profiles, used to copy the time index for the nuclear outages df
         gen_nuclear: Pandas.DataFrame
             Dataframe with nuclear unit information
+        nuclear_p_min: float
+            minimum generation level (outside maintenance window)
         french_nucl_cf: float
             capacity factor of French units - determines level of downtime
         other_nucl_cf: float
@@ -22,13 +24,15 @@ def apply_nuclear_outages(chp:pd.DataFrame, gen_nuclear:pd.DataFrame, french_nuc
     -------
         pandas.DataFrame:
             nuclear p_max_pu time series for all units
+        pandas.DataFrame:
+            nuclear p_min_pu time series for all units
     """
     nuclear_max_timeseries = pd.DataFrame(index=chp.index, columns=gen_nuclear.bus)
     nuclear_max_timeseries = nuclear_max_timeseries.apply(func=apply_nuclear_outage_profile, args=(french_nucl_cf,other_nucl_cf, chp.index),     axis=0)
     nuclear_max_timeseries.columns = gen_nuclear.index
-    # for the minimum series, set = 0.4 when p_max = 1
+    # for the minimum series, set equal to nuclear_p_min when p_max = 1
     nuclear_min_timeseries = nuclear_max_timeseries.copy()
-    nuclear_min_timeseries[nuclear_min_timeseries == 1] = 0.4
+    nuclear_min_timeseries[nuclear_min_timeseries == 1] = nuclear_p_min
     return nuclear_max_timeseries, nuclear_min_timeseries
 
 
@@ -89,7 +93,9 @@ def apply_ramping(row:pd.DataFrame) -> int:
 
 def chp_unit_profile(chp:pd.DataFrame, original_df:pd.DataFrame) -> pd.DataFrame:
     """
-    This function creates a chp profile based on country temperature for each unit, based on their location
+    This function creates a chp profile for each unit, based on their location using the existing data in chp. The data in chp is derived
+    from atlite temperature profiles per country, where chp output is scaled to match the temperature (so chp=1 corresponds to minimum
+    temperatures, and chp=0 corresponds to maximum). 
 
     Parameters
     ----------
@@ -131,7 +137,7 @@ def create_maintenance_profile(cf:float) ->list[float]:
         duration = random.randint(7*24,31*24)
         end_index = start_index + duration
         sub_set = values[start_index:end_index]
-        # if maintenance has already been scheduled during chosen time, pick again
+        # if maintenance has already been scheduled during chosen time (ie if there are 0's in the subset), pick again
         if 0 not in sub_set:
             values[start_index:end_index] = [0]*duration
     return values
