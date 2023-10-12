@@ -3,14 +3,14 @@ import pandas as pd
 import random
 
 
-def apply_nuclear_outages(chp:pd.DataFrame, gen_nuclear:pd.DataFrame, nuclear_p_min: float, french_nucl_cf:float, other_nucl_cf:float) -> pd.DataFrame:
+def apply_nuclear_outages(source_for_time_index:pd.DataFrame, gen_nuclear:pd.DataFrame, nuclear_p_min: float, french_nucl_cf:float, other_nucl_cf:float) -> pd.DataFrame:
     """
     This function creates a generation profile for nuclear units (using one capacity factor for France, and another for all other countries)     and sets the level of capacity generation available - either 1 or 0, replicating an annual maintenance schedule
 
     Parameters
     ----------
-        chp: Pandas.DataFrame
-            country CHP profiles, used to copy the time index for the nuclear outages df
+        source_for_time_index: Pandas.DataFrame
+            df used to copy the time index for the nuclear outages df
         gen_nuclear: Pandas.DataFrame
             Dataframe with nuclear unit information
         nuclear_p_min: float
@@ -27,8 +27,8 @@ def apply_nuclear_outages(chp:pd.DataFrame, gen_nuclear:pd.DataFrame, nuclear_p_
         pandas.DataFrame:
             nuclear p_min_pu time series for all units
     """
-    nuclear_max_timeseries = pd.DataFrame(index=chp.index, columns=gen_nuclear.bus)
-    nuclear_max_timeseries = nuclear_max_timeseries.apply(func=apply_nuclear_outage_profile, args=(french_nucl_cf,other_nucl_cf, chp.index),     axis=0)
+    nuclear_max_timeseries = pd.DataFrame(index=source_for_time_index.index, columns=gen_nuclear.bus)
+    nuclear_max_timeseries = nuclear_max_timeseries.apply(func=apply_nuclear_outage_profile, args=(french_nucl_cf,other_nucl_cf, source_for_time_index.index),     axis=0)
     nuclear_max_timeseries.columns = gen_nuclear.index
     # for the minimum series, set equal to nuclear_p_min when p_max = 1
     nuclear_min_timeseries = nuclear_max_timeseries.copy()
