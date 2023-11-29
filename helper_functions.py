@@ -65,31 +65,6 @@ def apply_nuclear_outage_profile(column:pd.Series, french_nucl_cf:float, other_n
     return pd.Series(index=index_timeseries, data=nuclear_time_series, name=country)
 
 
-def apply_ramping(row:pd.DataFrame) -> int:
-    """
-    This function creates 'min_up_time' (ramping) for grouped generators
-
-    Parameters
-    ----------
-        row: pd.DataFrame
-            function applies to row from gas unit dataframe
-    Returns
-    -------
-        int:
-            ramp up time
-    """
-    # apply gas min_ramp_up time (hours)
-    # 3/4 hour start up time for ccgts
-    if row['type'] == 'CC':
-        if row['age'] == 'new':
-            ramp = 3
-        else:
-            ramp = 4
-    # 0 gas cold start time for ocgts
-    else:
-        ramp=0
-    return ramp
-
 
 def chp_unit_profile(chp:pd.DataFrame, original_df:pd.DataFrame) -> pd.DataFrame:
     """
@@ -143,21 +118,4 @@ def create_maintenance_profile(cf:float) ->list[float]:
     return values
 
 
-def grouped_gas_ramping(gen_gas:pd.DataFrame) -> pd.DataFrame:
-    """
-    This function groups gas generators by age, country and technology (type) and creates parameter 'min_up_time' for grouped generators
-
-    Parameters
-    ----------
-        gen_gas: pd.DataFrame
-            dataframe with all gas generator units
-    Returns
-    -------
-        pd.DataFrame:
-            dataframe with gas generators grouped by age, country & technology and min_up_time applied
-    """    
-    grouped_gas = gen_gas.groupby(['bus', 'type', 'age']).agg({'carrier':'first','p_nom':sum, 'marginal_cost': 'mean','efficiency':'mean'}).reset_index()
-    grouped_gas['min_up_time'] = grouped_gas[['type','age']].apply(apply_ramping, axis=1)
-    grouped_gas = grouped_gas.set_index(grouped_gas['bus'] + '_' + grouped_gas['type'] + '_' + grouped_gas['age'])
-    return grouped_gas
 
