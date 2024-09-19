@@ -30,22 +30,25 @@ def concat_data(input_data_dicts:dict) -> dict:
     data_dict = {}
     for sheet_dict in input_data_dicts:
         for tab in sheet_dict.keys():
-            new_df = sheet_dict[tab]
-            # remove empty column headers
-            if "" in new_df.columns:
-                new_df = new_df.drop([""], axis=1)
-            # if tab doesnt exist, fill with df from sheet_dict
-            if tab not in data_dict.keys():
-                data_dict[tab] = new_df
-            # if tab already there, append to existing df
-            else:
-                existing_df = data_dict[tab]
-                # if timeseries, concat horizontally 
-                if "timeseries" in tab:
-                    updated_df = pd.concat([existing_df, new_df], axis=1)
+            try:
+                new_df = sheet_dict[tab]
+                # remove empty column headers
+                if "" in new_df.columns:
+                    new_df = new_df.drop([""], axis=1)
+                # if tab doesnt exist, fill with df from sheet_dict
+                if tab not in data_dict.keys():
+                    data_dict[tab] = new_df
+                # if tab already there, append to existing df
                 else:
-                    updated_df = pd.concat([existing_df, new_df], axis=0)
-                data_dict[tab] = updated_df
+                    existing_df = data_dict[tab]
+                    # if timeseries, concat horizontally 
+                    if "timeseries" in tab:
+                        updated_df = pd.concat([existing_df, new_df], axis=1)
+                    else:
+                        updated_df = pd.concat([existing_df, new_df], axis=0)
+                    data_dict[tab] = updated_df
+            except Exception as e:
+                print(f"Sheet {tab} failed due to error: {e}")
     return data_dict
 
     
