@@ -375,7 +375,7 @@ def create_nuclear_timeseries(chp, gen_nuclear, p_min_nuclear):
     # create nuclear time series to replicate maintenance profile
     nuclear_p_max_time_series, nuclear_p_min_time_series = apply_nuclear_outages(chp, gen_nuclear,
                                                                                  nuclear_p_min=p_min_nuclear,
-                                                                                 french_nucl_cf=0.85,
+                                                                                 french_nucl_cf=0.80,
                                                                                  other_nucl_cf=0.95)
     return nuclear_p_max_time_series, nuclear_p_min_time_series
 

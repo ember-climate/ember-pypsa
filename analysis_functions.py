@@ -37,7 +37,10 @@ def interconnection_flows(network):
     # add in net imports
     links = network.links_t.p0.sum() / 1000000
     links = links.reset_index().rename(columns={0:'TWh'})
-    links['from'] = links['Link'].apply(lambda x:x.split('_')[1] if x.split('_')[0] == 'link' else "h2_link")
+    links['Link'] = links['Link'].apply(
+        lambda x: x.replace("EN_", "EN-") if any(substr in x for substr in ["EN"]) else x
+    )
+    links['from'] = links['Link'].apply(lambda x:x.split('_')[1] if (x.split('_')[0] == 'link'and len(x.split('_'))==3)  else "h2_link")
     links['to'] = links['Link'].apply(lambda x: x.split('_')[2] if x.split('_')[0] == 'link' else "h2_link")
     from_grouped = links.groupby("from")['TWh'].sum().rename('from')
     to_grouped = links.groupby("to")['TWh'].sum().rename('to')
