@@ -27,6 +27,14 @@ The basic installation steps can be summarized as follows:
 3. Install an LP solver (make sure it is available in the `Python` terminal)
 4. Install the `PyPSA` package through `conda`
 
+### Additional Dependencies
+
+To enhance the functionality of the model, you will need to install additional dependencies. These include TensorFlow, PyTorch, PyWake, Dask, and PySpark. You can install these dependencies using the following command:
+
+```sh
+pip install tensorflow torch pywake dask pyspark
+```
+
 ## Getting started
 
 To make the model as accessible as possible `Ember-PyPSA` is contained in just one excel sheet (per scenario) and one main Python file (and a set of helper functions). The excel sheet contains all the input data, and the Python file is used to import them into the model, run the optimization and analyse the results.
@@ -39,6 +47,55 @@ After you complete the installation procedue, it is quite easy to get first resu
 4. Once the optimization is finished, you can view selected results in the bottom of the Jupyter notebook file.
 
 The notebook shows only basic outputs like electricity generation, but you there are several examples of processing results in the `PyPSA` documentation - such as plotting storage discharge profiles, SRMC, emissions, line loading etc. You can change scenarios by changing the data file path in cell 2.
+
+## Integrating Internal Data and Real-Time Data
+
+To integrate internal data and real-time data into the model, follow these steps:
+
+1. Prepare your internal data in a format similar to the existing input data files, such as Excel sheets. Ensure that your data includes all necessary columns and is structured similarly to the existing data.
+2. Use the functions in `helper_functions.py` to load your internal data. For example, you can use `load_data_locally` to load data from local Excel files or `load_data_from_google_sheet` to load data from Google Sheets.
+3. Modify the `ember-pypsa.ipynb` notebook to include your internal data. Update the data file paths and ensure that the data is loaded correctly.
+4. Use the functions in `analysis_functions.py` to analyze and process your internal data. These functions can help you generate risk assessments and adaptation plans for the plants in your portfolio.
+5. If needed, create new functions or modify existing ones in `helper_functions.py` and `analysis_functions.py` to handle any specific requirements or customizations for your internal data.
+6. Ensure that the data for India is correctly integrated into the model by checking the compatibility of the data with the existing functions and making any necessary adjustments.
+
+## Training and Integrating Machine Learning Models
+
+To train and integrate machine learning models using TensorFlow and PyTorch, follow these steps:
+
+1. Prepare your data in a format compatible with TensorFlow and PyTorch. Use the functions in `helper_functions.py` to load and preprocess your data.
+2. Train your machine learning models using TensorFlow and PyTorch. You can create neural networks or other models suitable for predictive analysis.
+3. Integrate the predictions from your machine learning models into the PyPSA network. Modify the functions in `analysis_functions.py` to incorporate the predictions.
+4. Update the `ember-pypsa.ipynb` notebook to include the steps for training and integrating the machine learning models. Ensure that the data file paths are updated and the models are loaded correctly.
+5. Validate the results by running simulations using the PyPSA framework. Check the results for any anomalies or inconsistencies that may indicate issues with the integration.
+6. Visualize the results using visualization libraries like seaborn and plotly. This can help identify any discrepancies or issues with the integration.
+
+## Using Dask for Parallel Computing
+
+To use Dask for parallel computing in data loading and processing, follow these steps:
+
+1. Install the Dask library using the following command:
+   ```sh
+   pip install dask
+   ```
+2. Modify the functions in `helper_functions.py` to use Dask for parallel computing. For example, you can use `dask.delayed` to parallelize data loading and processing tasks.
+3. Update the `ember-pypsa.ipynb` notebook to include the steps for using Dask for parallel computing. Ensure that the data file paths are updated and the Dask computations are executed correctly.
+4. Validate the results by running simulations using the PyPSA framework. Check the results for any anomalies or inconsistencies that may indicate issues with the parallelization.
+5. Visualize the results using visualization libraries like seaborn and plotly. This can help identify any discrepancies or issues with the parallelization.
+
+## Using Apache Spark for Big Data Processing
+
+To use Apache Spark for big data processing, follow these steps:
+
+1. Install Apache Spark and PySpark using the following command:
+   ```sh
+   pip install pyspark
+   ```
+2. Set up PySpark by configuring the necessary environment variables and initializing a Spark session.
+3. Modify the functions in `helper_functions.py` to use Spark for data processing. For example, you can use Spark DataFrames instead of pandas DataFrames for large-scale data processing.
+4. Update the `ember-pypsa.ipynb` notebook to include the steps for using Spark for big data processing. Ensure that the data file paths are updated and the Spark computations are executed correctly.
+5. Validate the results by running simulations using the PyPSA framework. Check the results for any anomalies or inconsistencies that may indicate issues with the integration.
+6. Visualize the results using visualization libraries like seaborn and plotly. This can help identify any discrepancies or issues with the integration.
 
 ## Model design
 
